@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Launcher icon before Android 8 (no adaptive icons): the logo mark itself. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group
+        android:scaleX="0.96"
+        android:scaleY="0.96"
+        android:translateX="6"
+        android:translateY="6">
+    <path
+        android:fillColor="#0D7A68"
+        android:pathData="M28,0 H72 A28,28 0 0 1 100,28 V72 A28,28 0 0 1 72,100 H28 A28,28 0 0 1 0,72 V28 A28,28 0 0 1 28,0 Z" />
+    <path
+        android:pathData="M24.5,39.5 V60.5 M37.5,30.5 V69.5 M50.5,43.5 V56.5"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="9"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M67,43 H76 M67,57 H70"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="8"
+        android:strokeLineCap="round" />
+    </group>
+</vector>

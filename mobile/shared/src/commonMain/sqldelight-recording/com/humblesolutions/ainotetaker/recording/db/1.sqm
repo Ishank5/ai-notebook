@@ -1,0 +1,5 @@
+-- the company a meeting is with, picked before recording. Recording.sq creates these on a new
+-- phone; this adds them to a queue made by an earlier version, keeping every recording already in it.
+ALTER TABLE recording ADD COLUMN company_choice TEXT;
+ALTER TABLE recording ADD COLUMN company_id TEXT;
+ALTER TABLE recording ADD COLUMN company_name TEXT;

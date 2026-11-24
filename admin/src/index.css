@@ -1,0 +1,223 @@
+@import "@fontsource/manrope/latin-400.css";
+@import "@fontsource/manrope/latin-500.css";
+@import "@fontsource/manrope/latin-600.css";
+@import "@fontsource/manrope/latin-700.css";
+@import "@fontsource/manrope/latin-800.css";
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Manrope", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --color-bg: #f4f6f5;
+  --color-surface: #ffffff;
+  --color-surface-alt: #eef2f0;
+  --color-line: #e1e7e4;
+  --color-ink: #0f1b19;
+  --color-ink-muted: #5a6b67;
+  --color-ink-faint: #8c9a96;
+  --color-primary: #0d7a68;
+  --color-primary-pressed: #09604f;
+  --color-primary-tint: #e3f3ef;
+  --color-record: #e5484d;
+  --color-record-tint: #fdecec;
+  --color-amber: #b7791f;
+  --color-amber-tint: #fbf3e2;
+  --color-success: #1f8a4c;
+  --color-success-tint: #e6f4ec;
+
+  /* Chart marks: the brand teal one step more saturated, so a single series clears the chroma floor. */
+  --color-chart: #00846c;
+  --color-chart-soft: #cfe7e1;
+  --color-grid: #edf1ef;
+
+  /* Note type badges: quiet tints, always with an icon and a word. */
+  --color-lecture: #3559b7;
+  --color-lecture-tint: #e9eefb;
+  --color-voice: #6b4fbb;
+  --color-voice-tint: #f0ecfa;
+  --color-journal: #9a6516;
+  --color-journal-tint: #fbf3e2;
+
+  --radius-card: 20px;
+  --shadow-soft: 0 1px 2px rgb(15 27 25 / 0.04);
+  --shadow-pop: 0 12px 32px -12px rgb(15 27 25 / 0.18), 0 2px 6px rgb(15 27 25 / 0.05);
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    @apply bg-bg font-sans text-ink antialiased;
+    font-feature-settings: "cv11";
+  }
+  h1 {
+    @apply text-2xl font-extrabold tracking-tight text-ink sm:text-[28px];
+  }
+  h2 {
+    @apply text-[15px] font-bold text-ink;
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+  ::selection {
+    @apply bg-primary-tint;
+  }
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-primary;
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-card border border-line bg-surface shadow-(--shadow-soft);
+  }
+  .card-pad {
+    @apply p-5 sm:p-6;
+  }
+
+  .btn-primary {
+    @apply btn bg-primary text-white hover:bg-primary-pressed active:bg-primary-pressed;
+  }
+  .btn-secondary {
+    @apply btn border border-line bg-surface text-ink hover:bg-surface-alt;
+  }
+  .btn-ghost {
+    @apply btn text-ink-muted hover:bg-surface-alt hover:text-ink;
+  }
+  .btn-danger {
+    @apply btn bg-record text-white hover:brightness-95;
+  }
+  /* After the variants, so its height wins. */
+  .btn-sm {
+    @apply h-8 px-3 text-[13px];
+  }
+
+  .field {
+    @apply h-10 w-full rounded-full border border-transparent bg-surface-alt px-4 text-sm text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-primary focus:bg-surface max-sm:text-base;
+  }
+
+  .pill {
+    @apply inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-line bg-surface px-3.5 text-[13px] font-semibold text-ink-muted transition-colors hover:text-ink;
+  }
+  .pill[aria-pressed="true"] {
+    @apply border-primary-tint bg-primary-tint text-primary;
+  }
+
+  .label {
+    @apply text-xs font-semibold text-ink-faint;
+  }
+
+  .num {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@utility btn {
+  @apply inline-flex h-10 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-full px-4 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50;
+}
+
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@keyframes live-dot {
+  50% {
+    opacity: 0.35;
+  }
+}
+.live-dot {
+  animation: live-dot 1.6s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  50% {
+    opacity: 0.55;
+  }
+}
+.shimmer {
+  background: var(--color-surface-alt);
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes typing {
+  0%, 80%, 100% {
+    opacity: 0.25;
+    transform: translateY(0);
+  }
+  40% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+}
+.typing-dot {
+  animation: typing 1.2s ease-in-out infinite;
+}
+.typing-dot:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.typing-dot:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+/* Flashcards: a card that turns over. */
+.flip {
+  perspective: 1400px;
+}
+.flip-inner {
+  position: relative;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.45s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.flip-inner[data-flipped="true"] {
+  transform: rotateY(180deg);
+}
+.flip-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.flip-back {
+  transform: rotateY(180deg);
+}
+
+dialog.confirm::backdrop {
+  background: rgb(15 27 25 / 0.35);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .live-dot,
+  .shimmer,
+  .typing-dot {
+    animation: none;
+  }
+  .flip-inner {
+    transition: none;
+  }
+}
+
+/* Export PDF: only the print report, on clean A4 pages. */
+@page {
+  size: A4;
+  margin: 16mm 15mm;
+}
+@media print {
+  html,
+  body {
+    background: #fff !important;
+  }
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .print-avoid {
+    break-inside: avoid;
+  }
+}

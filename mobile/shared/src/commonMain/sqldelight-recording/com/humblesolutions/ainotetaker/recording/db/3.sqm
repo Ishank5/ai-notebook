@@ -1,0 +1,6 @@
+-- when a cut-off recording was found (monotonic ms since boot, counting sleep) and what Android said
+-- about the process that died. Recording.sq creates these on a new phone; this adds them to a queue made by an
+-- earlier version, keeping every recording already in it. A recording already cut off has none, and the recorder
+-- counts its hour from the next time it looks.
+ALTER TABLE recording ADD COLUMN found_uptime_ms INTEGER;
+ALTER TABLE recording ADD COLUMN exit_info TEXT;

@@ -1,0 +1,10 @@
+node_modules/
+lib/
+
+# Emulator-only secrets and settings; real values live in Secret Manager.
+.secret.local
+.env*
+!.env.example
+
+# Service account keys for scripts/add-user.mjs never go in the repo.
+*service-account*.json

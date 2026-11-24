@@ -1,0 +1,107 @@
+*.iml
+.kotlin
+.gradle
+**/build/
+xcuserdata
+!src/**/build/
+local.properties
+.idea
+.DS_Store
+captures
+.externalNativeBuild
+.cxx
+*.xcodeproj/*
+!*.xcodeproj/project.pbxproj
+!*.xcodeproj/xcshareddata/
+!*.xcodeproj/project.xcworkspace/
+!*.xcworkspace/contents.xcworkspacedata
+**/xcshareddata/WorkspaceSettings.xcsettings
+node_modules/
+
+# Firebase configs — NEVER commit
+composeApp/google-services.json
+iosApp/iosApp/GoogleService-Info.plist
+# The Places key. See PlacesConfig.plist.example beside it.
+iosApp/iosApp/PlacesConfig.plist
+
+# CocoaPods build artifacts
+iosApp/Pods/
+iosApp/Podfile.lock
+iosApp/iosApp.xcworkspace/
+shared/build/cocoapods/
+shared/shared.podspec
+
+# Kotlin/Native + KMP
+.kotlin/
+
+# The electoral roll artifact. Tens of megabytes per version and the most
+# sensitive data the project holds. Get it with `node scripts/fetch-roll.mjs`,
+# which downloads it from Firebase Storage and verifies it against
+# roll/roll-manifest.json — the pin, which IS committed.
+roll/*.db
+roll/*.db.unresolved.json
+roll/*.db.part
+# The Firestore export. Names, ages, house numbers and addresses of tens of
+# thousands of people who have never heard of this app — it never goes in git.
+roll/*.jsonl
+# No longer written by anything — the Xcode build phase embeds the roll into
+# TAS.app directly. Still ignored so leftovers in an old checkout can never be
+# committed; embed-roll.sh deletes them on the next build.
+iosApp/iosApp/Roll/
+
+# Python bytecode from the roll builder.
+__pycache__/
+*.pyc
+
+# Geocoder response cache. Regenerable, and keyed by query text.
+scripts/geocode-localities/.cache.json
+
+# The geocoding API key, fetched from Google Cloud. A secret — never commit.
+.geocode-key
+roll/*.street-report.json
+roll/*.xlsx
+# Firebase CLI deploy cache, written by `firebase deploy --only hosting`.
+.firebase/
+
+# ---------------------------------------------------------------------------
+# ROLL AND VOTER DATA DROPPED AT THE ROOT.
+#
+# The rules above already keep the built artefact and the Firestore export out
+# of git. These keep out the things they are BUILT FROM, which arrive by hand
+# and land next to the README: a Commission draft-roll PDF, a booth workbook, a
+# ward document. Same data, same rule — it never goes in git — but nothing was
+# stopping `git add -A` from taking them.
+#
+# Root only. A spreadsheet that belongs to the project would live in a folder.
+/*.xlsx
+/*.xls
+/*.csv
+/*.docx
+/*.pdf
+
+# A captured browser session against the Commission's voter search. Megabytes
+# of somebody's query traffic, and HARs routinely carry cookies and auth
+# headers along with it.
+*.har
+
+# LibreOffice's lock file, created while one of the workbooks above is open.
+.~lock.*#
+
+# ---------------------------------------------------------------------------
+# THE SIGNING KEYSTORE. Never, under any circumstances.
+#
+# TASKey.jks was sitting untracked in the root while `git add -A` was one
+# keystroke away. A committed upload key lets anyone with repo access sign a
+# build as this developer, and Play will not let you take that back quietly —
+# it is a key rotation and a support case, not a revert.
+*.jks
+*.keystore
+keystore.properties
+
+# Android Studio's "Generate Signed Bundle" output. An 18 MB artifact rebuilt
+# on demand from the source next to it.
+composeApp/release/
+
+
+# Demo logins (generated passwords). Never commit.
+/demo-logins.local.txt

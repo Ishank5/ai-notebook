@@ -1,0 +1,222 @@
+-- The recorder's queue: every recording on this phone, every chunk of audio
+-- it produced, and every pause in between.
+--
+-- THIS IS THE SOURCE OF TRUTH ON THE PHONE, and it is written before anything
+-- touches the network. A chunk exists here from the moment its file is opened,
+-- so a crash, a kill or a flat battery leaves a row that says exactly which
+-- file was being written — which is what recovery reads on the next launch.
+
+CREATE TABLE recording (
+    id TEXT NOT NULL PRIMARY KEY,          -- a UUID made on the phone; the server keeps it
+    owner_uid TEXT NOT NULL,               -- uploads wait until this person is signed in
+    state TEXT NOT NULL,                   -- RecordingState.id
+    started_at INTEGER NOT NULL,           -- epoch ms, device clock
+    ended_at INTEGER,
+    end_reason TEXT,                       -- EndReason.id
+    title TEXT,
+    meeting_type TEXT,
+    location TEXT,
+    attendees TEXT,
+    heartbeat_at INTEGER,                  -- written every few seconds while recording
+    uploaded_at INTEGER,                   -- the server verified every chunk
+    purged_at INTEGER,                     -- the files are gone; the row stays as history
+    last_error TEXT,                       -- a translation key, shown on the row
+    -- the company the meeting is with, picked before recording (1.sqm adds these to older phones).
+    company_choice TEXT,                   -- CompanyChoice.id: company, none or later; null when not asked
+    company_id TEXT,                       -- the CRM's outreach entry id
+    company_name TEXT,                     -- its name when picked, for the list
+    -- the planned length (2.sqm adds these to older phones). Audio ms, as RecordingClock counts.
+    plan_ms INTEGER,                       -- the length picked before Record; null on a row from before plans
+    stop_at_ms INTEGER,                    -- where it stops now, after any Keep recording
+    -- when the phone found it cut off (3.sqm adds these to older phones). Monotonic ms since boot,
+    -- counting sleep, so the hour before it is sent by itself starts when the person could first be told, and a
+    -- clock changed by hand cannot shorten it.
+    found_uptime_ms INTEGER,
+    exit_info TEXT,                        -- what Android said about the process that died, for the developers
+    -- who recorded it, by name (4.sqm adds this to older phones), so a phone can say whose meetings
+    -- are waiting for somebody to sign in again.
+    owner_name TEXT
+);
+
+CREATE INDEX recording_owner ON recording(owner_uid, started_at);
+
+CREATE TABLE chunk (
+    recording_id TEXT NOT NULL,
+    seq INTEGER NOT NULL,                  -- 0, 1, 2 … across pauses and continuations
+    path TEXT NOT NULL,                    -- relative to the recorder's folder; see RecordingPaths
+    bytes INTEGER NOT NULL DEFAULT 0,
+    duration_ms INTEGER NOT NULL DEFAULT 0,
+    md5 TEXT,                              -- base64; null while the file is still open
+    state TEXT NOT NULL,                   -- ChunkState.id
+    attempts INTEGER NOT NULL DEFAULT 0,   -- every try, including ones with no signal
+    rejections INTEGER NOT NULL DEFAULT 0, -- tries Storage refused outright
+    last_attempt_at INTEGER,
+    -- upload runs that found the file there but could not read or seal it, and since when (5.sqm adds
+    -- these to older phones). Enough of them over a day set the file aside, so it cannot hold its recording forever.
+    unreadable INTEGER NOT NULL DEFAULT 0,
+    unreadable_since INTEGER,
+    PRIMARY KEY (recording_id, seq)
+);
+
+CREATE INDEX chunk_state ON chunk(state);
+
+CREATE TABLE gap (
+    recording_id TEXT NOT NULL,
+    start_ms INTEGER NOT NULL,             -- wall-clock offset from started_at
+    end_ms INTEGER,                        -- null while the gap is still open
+    reason TEXT NOT NULL                   -- GapReason.id
+);
+
+CREATE INDEX gap_recording ON gap(recording_id);
+
+-- ------------------------------------------------------------- recordings
+
+insertRecording:
+INSERT INTO recording(id, owner_uid, state, started_at, company_choice, company_id, company_name, plan_ms, stop_at_ms, owner_name)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+recordingById:
+SELECT * FROM recording WHERE id = ?;
+
+activeRecording:
+SELECT * FROM recording WHERE state IN ('recording', 'paused') ORDER BY started_at DESC LIMIT 1;
+
+recordingsInState:
+SELECT * FROM recording WHERE state = ? ORDER BY started_at;
+
+recordingsForOwner:
+SELECT * FROM recording WHERE owner_uid = ? ORDER BY started_at DESC;
+
+-- Oldest first, and only for the person signed in: a phone shared by two
+-- workers must never upload one's meeting as the other.
+recordingsToSync:
+SELECT * FROM recording WHERE owner_uid = ? AND state != 'uploaded' ORDER BY started_at;
+
+-- other people's recordings still on this phone and not yet confirmed, by person. They upload only
+-- once that person signs in here again.
+waitingForOthers:
+SELECT owner_uid, max(owner_name) AS owner_name, count(*) AS waiting
+FROM recording
+WHERE owner_uid != ? AND state != 'uploaded'
+GROUP BY owner_uid
+ORDER BY min(started_at);
+
+setState:
+UPDATE recording SET state = ? WHERE id = ?;
+
+finish:
+UPDATE recording SET state = ?, ended_at = ?, end_reason = ? WHERE id = ?;
+
+heartbeat:
+UPDATE recording SET heartbeat_at = ? WHERE id = ?;
+
+setDetails:
+UPDATE recording SET title = ?, meeting_type = ?, location = ?, attendees = ? WHERE id = ?;
+
+-- the company, changed after the meeting from the details card.
+setCompany:
+UPDATE recording SET company_choice = ?, company_id = ?, company_name = ? WHERE id = ?;
+
+-- Keep recording moved the planned end.
+setStopAt:
+UPDATE recording SET stop_at_ms = ? WHERE id = ?;
+
+markUploaded:
+UPDATE recording SET state = 'uploaded', uploaded_at = ?, last_error = NULL WHERE id = ?;
+
+-- the server will take nothing more for it (deleted in the CRM, or closed by this phone's own
+-- finalize). Not "sent": the reason stays, and so does any chunk that never went.
+markClosedByServer:
+UPDATE recording SET state = 'uploaded', uploaded_at = ?, last_error = ? WHERE id = ?;
+
+-- found cut off (a value), or continued (null).
+markFound:
+UPDATE recording SET found_uptime_ms = ? WHERE id = ?;
+
+-- why the process died, as Android tells it on the next launch.
+setExitInfo:
+UPDATE recording SET exit_info = ? WHERE id = ?;
+
+setLastError:
+UPDATE recording SET last_error = ? WHERE id = ?;
+
+-- Verified long enough ago that the phone's copy of the audio can go. The row
+-- and its chunk rows stay, so the worker's list keeps its history.
+uploadedBefore:
+SELECT * FROM recording
+WHERE state = 'uploaded' AND purged_at IS NULL AND uploaded_at < ?;
+
+markPurged:
+UPDATE recording SET purged_at = ? WHERE id = ?;
+
+deleteRecording {
+    DELETE FROM chunk WHERE recording_id = :id;
+    DELETE FROM gap WHERE recording_id = :id;
+    DELETE FROM recording WHERE id = :id;
+}
+
+-- ----------------------------------------------------------------- chunks
+
+insertChunk:
+INSERT INTO chunk(recording_id, seq, path, state) VALUES (?, ?, ?, 'open');
+
+closeChunk:
+UPDATE chunk SET bytes = ?, duration_ms = ?, md5 = ?, state = 'closed'
+WHERE recording_id = ? AND seq = ?;
+
+chunksFor:
+SELECT * FROM chunk WHERE recording_id = ? ORDER BY seq;
+
+openChunks:
+SELECT * FROM chunk WHERE state = 'open' ORDER BY recording_id, seq;
+
+-- Nearly always the last chunk, holding no audio: chunks open on their first
+-- frame, so an empty one means the app died between creating the row and
+-- writing to it. The other case is a file that vanished or went bad and can
+-- never be uploaded; the server is told which chunks exist, so a dropped one
+-- costs its minute and not the meeting.
+deleteChunk:
+DELETE FROM chunk WHERE recording_id = ? AND seq = ?;
+
+markChunkUploaded:
+UPDATE chunk SET state = 'uploaded' WHERE recording_id = ? AND seq = ?;
+
+-- The server said it never arrived: back into the queue.
+markChunkPending:
+UPDATE chunk SET state = 'closed' WHERE recording_id = ? AND seq = ? AND state = 'uploaded';
+
+noteAttempt:
+UPDATE chunk SET attempts = attempts + 1, last_attempt_at = ?
+WHERE recording_id = ? AND seq = ?;
+
+noteRejection:
+UPDATE chunk SET rejections = rejections + 1 WHERE recording_id = ? AND seq = ?;
+
+-- one more upload run found the file there but could not read it.
+noteUnreadable:
+UPDATE chunk SET unreadable = unreadable + 1, unreadable_since = coalesce(unreadable_since, ?)
+WHERE recording_id = ? AND seq = ?;
+
+maxSeq:
+SELECT max(seq) FROM chunk WHERE recording_id = ?;
+
+chunkTotals:
+SELECT recording_id,
+       count(*) AS total,
+       sum(CASE WHEN state = 'uploaded' THEN 1 ELSE 0 END) AS uploaded,
+       sum(CASE WHEN state = 'open' THEN 1 ELSE 0 END) AS open,
+       sum(duration_ms) AS duration_ms,
+       sum(bytes) AS bytes
+FROM chunk
+GROUP BY recording_id;
+
+-- ------------------------------------------------------------------- gaps
+
+insertGap:
+INSERT INTO gap(recording_id, start_ms, reason) VALUES (?, ?, ?);
+
+closeOpenGaps:
+UPDATE gap SET end_ms = ? WHERE recording_id = ? AND end_ms IS NULL;
+
+gapsFor:
+SELECT * FROM gap WHERE recording_id = ? ORDER BY start_ms;

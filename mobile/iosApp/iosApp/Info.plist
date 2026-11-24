@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CADisableMinimumFrameDurationOnPhone</key>
+	<true/>
+	<!-- The AI Notebook API, from API_BASE_URL in Configuration/Config.xcconfig.
+	     Read by repository/ApiClient.swift. -->
+	<key>ApiBaseUrl</key>
+	<string>$(API_BASE_URL)</string>
+	<!-- ainotetaker://recorder/stop, from the Live Activity's Stop. Opening the
+	     app from the lock screen asks for the unlock first, and the app then
+	     asks "Stop recording?" before it stops. -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.humblesolutions.ainotetaker.recorder</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>ainotetaker</string>
+			</array>
+		</dict>
+	</array>
+	<key>UIBackgroundModes</key>
+	<array>
+		<!-- `audio` keeps a recording going with the phone locked; `fetch` and
+		     `processing` let recordings upload later if there was no signal. -->
+		<string>audio</string>
+		<string>fetch</string>
+		<string>processing</string>
+	</array>
+	<!-- The recorder's two background uploads; see RecorderBackground. -->
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>com.humblesolutions.ainotetaker.recorder.refresh</string>
+		<string>com.humblesolutions.ainotetaker.recorder.upload</string>
+	</array>
+	<!-- The Live Activity on the lock screen and in the Dynamic Island while a
+	     meeting records (the RecorderWidget extension draws it). -->
+	<key>NSSupportsLiveActivities</key>
+	<true/>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>AI Notebook records your meetings, classes and notes so it can write a summary. It keeps recording with the screen locked.</string>
+	<key>UIAppFonts</key>
+	<array>
+		<string>Manrope_400Regular.ttf</string>
+		<string>Manrope_500Medium.ttf</string>
+		<string>Manrope_600SemiBold.ttf</string>
+		<string>Manrope_700Bold.ttf</string>
+		<string>Manrope_800ExtraBold.ttf</string>
+	</array>
+	<key>UILaunchScreen</key>
+	<dict>
+		<key>UIColorName</key>
+		<string>LaunchBackground</string>
+	</dict>
+</dict>
+</plist>

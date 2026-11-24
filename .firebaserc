@@ -1,0 +1,12 @@
+{
+  "projects": {
+    "default": "team-akshay-sharma"
+  },
+  "targets": {
+    "team-akshay-sharma": {
+      "hosting": {
+        "admin": ["ai-notebook-hs"]
+      }
+    }
+  }
+}

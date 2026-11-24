@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The status-bar icon while a meeting is being recorded: the logo's waveform and note
+     lines, white, because Android draws small icons as a mask. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+    <group
+        android:scaleX="1.3"
+        android:scaleY="1.3"
+        android:translateX="-15"
+        android:translateY="-15">
+    <path
+        android:pathData="M24.5,39.5 V60.5 M37.5,30.5 V69.5 M50.5,43.5 V56.5"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="9"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M67,43 H76 M67,57 H70"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="8"
+        android:strokeLineCap="round" />
+    </group>
+</vector>

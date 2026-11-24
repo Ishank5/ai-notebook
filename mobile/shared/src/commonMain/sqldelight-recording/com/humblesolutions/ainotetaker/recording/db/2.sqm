@@ -1,0 +1,5 @@
+-- the planned length and where it stops after any Keep recording, in audio ms. Recording.sq
+-- creates these on a new phone; this adds them to a queue made by an earlier version, keeping every recording
+-- already in it. Rows from before have neither, and the recorder treats them as the default plan.
+ALTER TABLE recording ADD COLUMN plan_ms INTEGER;
+ALTER TABLE recording ADD COLUMN stop_at_ms INTEGER;

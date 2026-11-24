@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- The meeting recorder. Nothing else in the app uses the microphone.
+         The audio is kept on the phone and sent to the AI Notebook API, where
+         it is transcribed and summarised. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <!-- A meeting is recorded with the phone locked in a pocket. Only a
+         foreground service of type microphone may keep the microphone open
+         then; the permissions are the price of declaring one. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
+    <!-- Keeps the CPU awake between microphone reads while the screen is off,
+         held only while a recording is running. -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- The buzz when a recording reaches its planned length, and when it stops by itself. -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- The recorder says "waiting for signal" rather than "sending" when
+         there is none; WorkManager declares this too, but it is ours to rely on. -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!--
+        Android 13+ will not show a notification until the person agrees. On
+        12 and below the permission does not exist and notifications just work,
+        which is why the request below is version-gated rather than assumed.
+    -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- after a restart, find a recording the phone died in the
+         middle of and say so. Recovery only; the recorder is never started. -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- the battery chip asks, in one tap, to let the recorder run
+         with the screen off. Google Play allows this only for apps whose core
+         job needs it; a meeting recorder is argued as one. -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.AINotebook">
+        <activity
+            android:exported="true"
+            android:name=".MainActivity"
+            android:launchMode="singleTask"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!--
+          The meeting recorder.
+
+          NOT EXPORTED: only this app's own screen and notification buttons
+          start, pause or stop it. microphone is the only type it needs, and
+          Android 14+ refuses to start it unless RECORD_AUDIO is granted and the
+          app is on screen — which is exactly when somebody presses Record.
+
+          stopWithTask="false" (Android's default, made explicit):
+          swiping the app away from recents leaves the recording, and its
+          notification, running.
+        -->
+        <service
+            android:name=".recorder.RecorderService"
+            android:exported="false"
+            android:stopWithTask="false"
+            android:foregroundServiceType="microphone" />
+
+        <!--
+          the recorder's alarms (the dead man's switch and the
+          still-paused reminder). Not exported: only this app's own alarms.
+        -->
+        <receiver
+            android:name=".recorder.RecorderAlarmReceiver"
+            android:exported="false" />
+
+        <!--
+          a restart or an update can end a recording without a
+          word. This runs recovery and posts the notice; it never records.
+          Exported because the system sends these; both are protected
+          broadcasts no other app can send.
+        -->
+        <receiver
+            android:name=".recorder.RecorderBootReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+    </application>
+
+</manifest>

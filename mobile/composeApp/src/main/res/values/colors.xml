@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The window background painted before Compose draws: the app's bg token, so the first frame does not flash. -->
+<resources>
+    <color name="window_background">#F4F6F5</color>
+</resources>

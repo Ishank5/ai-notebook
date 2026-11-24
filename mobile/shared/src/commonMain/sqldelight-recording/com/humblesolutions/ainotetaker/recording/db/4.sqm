@@ -1,0 +1,4 @@
+-- who recorded it, by name, so the phone can say "2 meetings waiting for Priya to sign in".
+-- Recording.sq creates this on a new phone; this adds it to a queue made by an earlier version, keeping every
+-- recording already in it. Rows from before have none, and the phone says "another account".
+ALTER TABLE recording ADD COLUMN owner_name TEXT;

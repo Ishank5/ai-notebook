@@ -1,0 +1,44 @@
+# OS / editors
+.DS_Store
+.idea/
+.vscode/
+*.iml
+
+# Firebase
+.firebase/
+firebase-debug*.log
+firestore-debug.log
+ui-debug.log
+*-adminsdk-*.json
+service-account*.json
+
+# Node
+node_modules/
+dist/
+functions/lib/
+.env
+.env.*
+!.env.example
+
+# Android / Gradle
+mobile/.gradle/
+mobile/.kotlin/
+mobile/**/build/
+mobile/local.properties
+*.apk
+*.aab
+*.jks
+*.keystore
+
+# iOS
+mobile/iosApp/Pods/
+xcuserdata/
+DerivedData/
+*.xcuserstate
+
+# Firebase app config files (download with `firebase apps:sdkconfig`, see README)
+mobile/composeApp/google-services.json
+mobile/iosApp/iosApp/GoogleService-Info.plist
+
+# Release builds (uploaded to GitHub Releases, not committed)
+dist-release/

@@ -1,0 +1,6 @@
+-- upload runs that found a chunk's file there but could not read (or seal) it, and since when (epoch
+-- ms). After enough of them over at least a day the file is moved to rejected/ and the chunk dropped, so one file
+-- that can never be read no longer holds its whole recording back. Recording.sq creates these on a new phone; this
+-- adds them to a queue made by an earlier version, keeping every recording already in it.
+ALTER TABLE chunk ADD COLUMN unreadable INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE chunk ADD COLUMN unreadable_since INTEGER;
