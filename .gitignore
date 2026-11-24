@@ -42,3 +42,6 @@ mobile/iosApp/iosApp/GoogleService-Info.plist
 
 # Release builds (uploaded to GitHub Releases, not committed)
 dist-release/
+
+# Project report and slides (shared directly, not in the repo)
+report/
